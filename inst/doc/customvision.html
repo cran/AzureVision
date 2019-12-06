@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Hong Ooi" />
+
+
+<title>Creating and deploying a Custom Vision predictive service</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#header {
+text-align: center;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Creating and deploying a Custom Vision predictive service</h1>
+<h4 class="author"><em>Hong Ooi</em></h4>
+
+
+
+<p>The basic idea behind Custom Vision is to take a pre-built image recognition model supplied by Azure, and customise it for your needs by supplying a set of images with which to update it. All model training and prediction is done in the cloud, so you don’t need a powerful machine. Similarly, since you are starting with a model that has already been trained, you don’t need a very large dataset or long training times to obtain good predictions (ideally). This vignette walks you through the process of creating and deploying a Custom Vision predictive service.</p>
+<div id="creating-the-resources" class="section level2">
+<h2>Creating the resources</h2>
+<p>You can create the Custom Vision resources using the AzureRMR framework for interacting with Resource Manager. Note that Custom Vision requires at least <em>two</em> resources to be created: one for training, and one for prediction. The available service tiers for Custom Vision are <code>F0</code> (free, limited to 2 projects for training and 10k transactions/month for prediction) and <code>S0</code>.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(AzureVision)</span>
+<span id="cb1-2"><a href="#cb1-2"></a>rg &lt;-<span class="st"> </span>AzureRMR<span class="op">::</span><span class="kw">get_azure_login</span>(<span class="st">&quot;yourtenant&quot;</span>)<span class="op">$</span></span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="st">    </span><span class="kw">get_subscription</span>(<span class="st">&quot;sub_id&quot;</span>)<span class="op">$</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a><span class="st">    </span><span class="kw">get_resource_group</span>(<span class="st">&quot;rgname&quot;</span>)</span>
+<span id="cb1-5"><a href="#cb1-5"></a></span>
+<span id="cb1-6"><a href="#cb1-6"></a>res &lt;-<span class="st"> </span>rg<span class="op">$</span><span class="kw">create_cognitive_service</span>(<span class="st">&quot;mycustvis&quot;</span>,</span>
+<span id="cb1-7"><a href="#cb1-7"></a>    <span class="dt">service_type=</span><span class="st">&quot;CustomVision&quot;</span>, <span class="dt">service_tier=</span><span class="st">&quot;S0&quot;</span>)</span>
+<span id="cb1-8"><a href="#cb1-8"></a>pred_res &lt;-<span class="st"> </span>rg<span class="op">$</span><span class="kw">create_cognitive_service</span>(<span class="st">&quot;mycustvispred&quot;</span>,</span>
+<span id="cb1-9"><a href="#cb1-9"></a>    <span class="dt">service_type=</span><span class="st">&quot;CustomVision.Prediction&quot;</span>, <span class="dt">service_tier=</span><span class="st">&quot;S0&quot;</span>)</span></code></pre></div>
+</div>
+<div id="training" class="section level2">
+<h2>Training</h2>
+<p>Custom Vision defines two different types of endpoint: a training endpoint, and a prediction endpoint. Somewhat confusingly, they can both share the same hostname, but use different paths and authentication keys. To start, call the <code>customvision_training_endpoint</code> function with the service URL and key.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>url &lt;-<span class="st"> </span>res<span class="op">$</span>properties<span class="op">$</span>endpoint</span>
+<span id="cb2-2"><a href="#cb2-2"></a>key &lt;-<span class="st"> </span>res<span class="op">$</span><span class="kw">list_keys</span>()[<span class="dv">1</span>]</span>
+<span id="cb2-3"><a href="#cb2-3"></a></span>
+<span id="cb2-4"><a href="#cb2-4"></a>endp &lt;-<span class="st"> </span><span class="kw">customvision_training_endpoint</span>(<span class="dt">url=</span>url, <span class="dt">key=</span>key)</span></code></pre></div>
+<div id="creating-the-project" class="section level3">
+<h3>Creating the project</h3>
+<p>Custom Vision is organised hierarchically. At the top level, we have a <em>project</em>, which represents the data and model for a specific task. Within a project, we have one or more <em>iterations</em> of the model, built on different sets of training images. Each iteration in a project is independent: you can create (train) an iteration, deploy it, and delete it without affecting other iterations.</p>
+<p>You can see the projects that currently exist on the endpoint by calling <code>list_projects</code>. This returns a named list of project objects:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">list_projects</span>(endp)</span></code></pre></div>
+<pre><code>$general_compact
+Azure Custom Vision project &#39;general_compact&#39; (304fc776-d860-490a-b4ec-5964bb134743)
+  Endpoint: https://australiaeast.api.cognitive.microsoft.com/customvision/v3.0
+  Domain: classification.general.compact (0732100f-1a38-4e49-a514-c9b44c697ab5)
+  Export target: standard
+  Classification type: Multiclass
+
+$general_multilabel
+Azure Custom Vision project &#39;general_multilabel&#39; (c485f10b-cb54-47a3-b585-624488335f58)
+  Endpoint: https://australiaeast.api.cognitive.microsoft.com/customvision/v3.0
+  Domain: classification.general (ee85a74c-405e-4adc-bb47-ffa8ca0c9f31)
+  Export target: none
+  Classification type: Multilabel
+
+$logo_obj
+Azure Custom Vision project &#39;logo_obj&#39; (af82557f-6ead-401c-afd6-bb9d5a3b042b)
+  Endpoint: https://australiaeast.api.cognitive.microsoft.com/customvision/v3.0
+  Domain: object_detection.logo (1d8ffafe-ec40-4fb2-8f90-72b3b6cecea4)
+  Export target: none
+  Classification type: NA</code></pre>
+<p>There are three different types of projects, as implied by the list above:</p>
+<ul>
+<li>A <em>multiclass classification</em> project is for classifying images into a set of <em>tags</em>, or target labels. An image can be assigned to one tag only.</li>
+<li>A <em>multilabel classification</em> project is similar, but each image can have multiple tags assigned to it.</li>
+<li>An <em>object detection</em> project is for detecting which objects, if any, from a set of candidates are present in an image.</li>
+</ul>
+<p>The functions to create these projects are <code>create_classification_project</code> (which is used to create both multiclass and multilabel projects) and <code>create_object_detection_project</code>. Let’s create a classification project:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>testproj &lt;-<span class="st"> </span><span class="kw">create_classification_project</span>(endp, <span class="st">&quot;testproj&quot;</span>, <span class="dt">export_target=</span><span class="st">&quot;standard&quot;</span>)</span>
+<span id="cb5-2"><a href="#cb5-2"></a>testproj</span></code></pre></div>
+<pre><code>Azure Custom Vision project &#39;testproj&#39; (db368447-e5da-4cd7-8799-0ccd8157323e)
+  Endpoint: https://australiaeast.api.cognitive.microsoft.com/customvision/v3.0
+  Domain: classification.general.compact (0732100f-1a38-4e49-a514-c9b44c697ab5)
+  Export target: standard
+  Classification type: Multiclass</code></pre>
+<p>Here, we specify the export target to be <code>standard</code> to support exporting the final model to one of various standalone formats, eg TensorFlow, CoreML or ONNX. The default is <code>none</code>, in which case the model stays on the Custom Vision server. The advantage of <code>none</code> is that the model can be more complex, resulting in potentially better accuracy. The type of project is multiclass classification, and the domain (the initial model used as the basis for training) is <code>general</code>. Other possible domains for classification include <code>landmarks</code> and <code>retail</code>.</p>
+</div>
+<div id="adding-and-tagging-images" class="section level3">
+<h3>Adding and tagging images</h3>
+<p>Since a Custom Vision model is trained in Azure and not locally, we need to upload some images. The data we’ll use comes from the Microsoft <a href="https://github.com/microsoft/ComputerVision">Computer Vision Best Practices</a> project. This is a simple set of images containing 4 kinds of objects one might find in a fridge: cans, cartons, milk bottles, and water bottles.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw">download.file</span>(</span>
+<span id="cb7-2"><a href="#cb7-2"></a>    <span class="st">&quot;https://cvbp.blob.core.windows.net/public/datasets/image_classification/fridgeObjects.zip&quot;</span>,</span>
+<span id="cb7-3"><a href="#cb7-3"></a>    <span class="st">&quot;fridgeObjects.zip&quot;</span></span>
+<span id="cb7-4"><a href="#cb7-4"></a>)</span>
+<span id="cb7-5"><a href="#cb7-5"></a><span class="kw">unzip</span>(<span class="st">&quot;fridgeObjects.zip&quot;</span>)</span></code></pre></div>
+<p>The generic function to add images to a project is <code>add_images</code>, which takes a vector of filenames, Internet URLs or raw vectors as the images to upload. The method for classification projects also has an argument <code>tags</code> which can be used to assign labels to the images as they are uploaded.</p>
+<p><code>add_images</code> returns a vector of <em>image IDs</em>, which are how Custom Vision keeps track of the images it uses. It should be noted that Custom Vision does not keep a record of the source filename or URL; it works <em>only</em> with image IDs. A future release of AzureVision may automatically track the source metadata, allowing you to associate an ID with an actual image. For now, this must be done manually.</p>
+<p>Let’s upload the fridge objects to the project. We’ll keep aside 5 images from each class of object to use as validation data.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>cans &lt;-<span class="st"> </span><span class="kw">dir</span>(<span class="st">&quot;fridgeObjects/can&quot;</span>, <span class="dt">full.names=</span><span class="ot">TRUE</span>)</span>
+<span id="cb8-2"><a href="#cb8-2"></a>cartons &lt;-<span class="st"> </span><span class="kw">dir</span>(<span class="st">&quot;fridgeObjects/carton&quot;</span>, <span class="dt">full.names=</span><span class="ot">TRUE</span>)</span>
+<span id="cb8-3"><a href="#cb8-3"></a>milk &lt;-<span class="st"> </span><span class="kw">dir</span>(<span class="st">&quot;fridgeObjects/milk_bottle&quot;</span>, <span class="dt">full.names=</span><span class="ot">TRUE</span>)</span>
+<span id="cb8-4"><a href="#cb8-4"></a>water &lt;-<span class="st"> </span><span class="kw">dir</span>(<span class="st">&quot;fridgeObjects/water_bottle&quot;</span>, <span class="dt">full.names=</span><span class="ot">TRUE</span>)</span>
+<span id="cb8-5"><a href="#cb8-5"></a></span>
+<span id="cb8-6"><a href="#cb8-6"></a><span class="co"># upload all but 5 images from cans and cartons, and tag them</span></span>
+<span id="cb8-7"><a href="#cb8-7"></a>can_ids &lt;-<span class="st"> </span><span class="kw">add_images</span>(testproj, cans[<span class="op">-</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>)], <span class="dt">tags=</span><span class="st">&quot;can&quot;</span>)</span>
+<span id="cb8-8"><a href="#cb8-8"></a>carton_ids &lt;-<span class="st"> </span><span class="kw">add_images</span>(testproj, cartons[<span class="op">-</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>)], <span class="dt">tags=</span><span class="st">&quot;carton&quot;</span>)</span></code></pre></div>
+<p>If you don’t tag the images at upload time, you can do so later with <code>add_image_tags</code>:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="co"># upload all but 5 images from milk and water bottles</span></span>
+<span id="cb9-2"><a href="#cb9-2"></a>milk_ids &lt;-<span class="st"> </span><span class="kw">add_images</span>(testproj, milk[<span class="op">-</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>)])</span>
+<span id="cb9-3"><a href="#cb9-3"></a>water_ids &lt;-<span class="st"> </span><span class="kw">add_images</span>(testproj, water[<span class="op">-</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>)])</span>
+<span id="cb9-4"><a href="#cb9-4"></a></span>
+<span id="cb9-5"><a href="#cb9-5"></a><span class="kw">add_image_tags</span>(testproj, milk_ids, <span class="dt">tags=</span><span class="st">&quot;milk_bottle&quot;</span>)</span>
+<span id="cb9-6"><a href="#cb9-6"></a><span class="kw">add_image_tags</span>(testproj, water_ids, <span class="dt">tags=</span><span class="st">&quot;water_bottle&quot;</span>)</span></code></pre></div>
+<p>Other image functions to be aware of include <code>list_images</code>, <code>remove_images</code>, and <code>add_image_regions</code> (which is for object detection projects). A useful one is <code>browse_images</code>, which takes a vector of IDs and displays the corresponding images in your browser.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="kw">browse_images</span>(testproj, water_ids[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>])</span></code></pre></div>
+</div>
+<div id="training-the-model" class="section level3">
+<h3>Training the model</h3>
+<p>Having uploaded the data, we can train the Custom Vision model with <code>train_model</code>. This trains the model on the server and returns a <em>model iteration</em>, which is the result of running the training algorithm on the current set of images. Each time you call <code>train_model</code>, for example to update the model after adding or removing images, you will obtain a different model iteration. In general, you can rely on AzureVision to keep track of the iterations for you, and automatically return the relevant results for the latest iteration.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a>mod &lt;-<span class="st"> </span><span class="kw">train_model</span>(testproj)</span>
+<span id="cb11-2"><a href="#cb11-2"></a>mod</span></code></pre></div>
+<pre><code>Azure Custom Vision model
+  Project/iteration: testproj/Iteration 1 (f243bb4c-e4f8-473e-9df0-190a407472be)</code></pre>
+<p>Optional arguments to <code>train_model</code> include:</p>
+<ul>
+<li><code>training_method</code>: Set this to “advanced” to force Custom Vision to do the training from scratch, rather than simply updating a pre-trained model. This also enables the other arguments below.</li>
+<li><code>max_time</code>: If <code>training_method == &quot;advanced&quot;</code>, the maximum runtime in hours for training the model. The default is 1 hour.</li>
+<li><code>force</code>: If <code>training_method == &quot;advanced&quot;</code>, whether to train the model anyway even if the images have not changed.</li>
+<li><code>email</code>: If <code>training_method == &quot;advanced&quot;</code>, an optional email address to send a notification to when the training is complete.</li>
+<li><code>wait</code>: Whether to wait until training completes before returning.</li>
+</ul>
+<p>Other model iteration management functions are <code>get_model</code> (to retrieve a previously trained iteration), <code>list_models</code> (retrieve all previously trained iterations), and <code>delete_model</code>.</p>
+<p>We can examine the model performance on the training data (which may be different to the current data!) with the <code>summary</code> method. For this toy problem, the model manages to obtain a perfect fit.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a><span class="kw">summary</span>(mod)</span></code></pre></div>
+<pre><code>$perTagPerformance
+                                    id         name precision precisionStdDeviation recall
+1 22ddd4bc-2031-43a1-b0ef-eb6b219eb6f7          can         1                     0      1
+2 301db6f9-b701-4dc6-8650-a9cf3fe4bb2e       carton         1                     0      1
+3 594ad770-83e5-4c77-825d-9249dae4a2c6  milk_bottle         1                     0      1
+4 eda5869a-cc75-41df-9c4c-717c10f79739 water_bottle         1                     0      1
+
+  recallStdDeviation averagePrecision    
+1                  0                1
+2                  0                1
+3                  0                1
+4                  0                1
+
+$precision
+[1] 1
+
+$precisionStdDeviation
+[1] 0
+
+$recall
+[1] 1
+
+$recallStdDeviation
+[1] 0
+
+$averagePrecision
+[1] 1</code></pre>
+<p>Obtaining predictions from the trained model is done with the <code>predict</code> method. By default, this returns the predicted tag (class label) for the image, but you can also get the predicted class probabilities by specifying <code>type=&quot;prob&quot;</code>.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a>validation_imgs &lt;-<span class="st"> </span><span class="kw">c</span>(cans[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>], cartons[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>], milk[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>], water[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>])</span>
+<span id="cb15-2"><a href="#cb15-2"></a>validation_tags &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="kw">c</span>(<span class="st">&quot;can&quot;</span>, <span class="st">&quot;carton&quot;</span>, <span class="st">&quot;milk_bottle&quot;</span>, <span class="st">&quot;water_bottle&quot;</span>), <span class="dt">each=</span><span class="dv">5</span>)</span>
+<span id="cb15-3"><a href="#cb15-3"></a></span>
+<span id="cb15-4"><a href="#cb15-4"></a>predicted_tags &lt;-<span class="st"> </span><span class="kw">predict</span>(mod, validation_imgs)</span>
+<span id="cb15-5"><a href="#cb15-5"></a></span>
+<span id="cb15-6"><a href="#cb15-6"></a><span class="kw">table</span>(predicted_tags, validation_tags)</span></code></pre></div>
+<pre><code>              validation_tags
+predicted_tags can carton milk_bottle water_bottle
+  can            4      0           0            0
+  carton         0      5           0            0
+  milk_bottle    1      0           5            0
+  water_bottle   0      0           0            5</code></pre>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a><span class="kw">head</span>(<span class="kw">predict</span>(mod, validation_imgs, <span class="dt">type=</span><span class="st">&quot;prob&quot;</span>))</span></code></pre></div>
+<pre><code>              can       carton  milk_bottle water_bottle
+[1,] 9.999968e-01 8.977501e-08 5.855104e-11 3.154334e-06
+[2,] 9.732912e-01 3.454168e-10 4.610847e-06 2.670425e-02
+[3,] 3.019476e-01 5.779990e-04 6.974699e-01 4.506565e-06
+[4,] 5.072662e-01 2.849253e-03 4.856858e-01 4.198686e-03
+[5,] 9.962270e-01 5.411842e-07 3.540882e-03 2.316211e-04
+[6,] 3.145034e-11 1.000000e+00 2.574793e-10 4.242047e-14</code></pre>
+<p>This shows that the model got 19 out of 20 predictions correct on the validation data, misclassifying one of the cans as a milk bottle.</p>
+</div>
+</div>
+<div id="deployment" class="section level2">
+<h2>Deployment</h2>
+<div id="publishing-to-a-prediction-resource" class="section level3">
+<h3>Publishing to a prediction resource</h3>
+<p>The code above demonstrates using the training endpoint to obtain predictions, which is really meant only for model testing and validation. For production purposes, we would normally <em>publish</em> a trained model to a Custom Vision prediction resource. Among other things, a user with access to the training endpoint has complete freedom to modify the model and the data, whereas access to the prediction endpoint only allows getting predictions.</p>
+<p>Publishing a model requires knowing the Azure resource ID of the prediction resource. Here, we’ll use the resource object that was created earlier using AzureRMR; you can also obtain this information from the Azure Portal.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a><span class="co"># publish to the prediction resource we created above</span></span>
+<span id="cb19-2"><a href="#cb19-2"></a><span class="kw">publish_model</span>(mod, <span class="st">&quot;iteration1&quot;</span>, pred_res)</span></code></pre></div>
+<p>Once a model has been published, we can obtain predictions from the prediction endpoint in a manner very similar to previously. We create a predictive service object with <code>classification_service</code>, and then call the <code>predict</code> method. Note that a required input is the project ID; you can supply this directly or via the project object.</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a>pred_url &lt;-<span class="st"> </span>pred_res<span class="op">$</span>properties<span class="op">$</span>endpoint</span>
+<span id="cb20-2"><a href="#cb20-2"></a>pred_key &lt;-<span class="st"> </span>pred_res<span class="op">$</span><span class="kw">list_keys</span>()[<span class="dv">1</span>]</span>
+<span id="cb20-3"><a href="#cb20-3"></a></span>
+<span id="cb20-4"><a href="#cb20-4"></a>pred_endp &lt;-<span class="st"> </span><span class="kw">customvision_prediction_endpoint</span>(<span class="dt">url=</span>pred_url, <span class="dt">key=</span>pred_key)</span>
+<span id="cb20-5"><a href="#cb20-5"></a></span>
+<span id="cb20-6"><a href="#cb20-6"></a>project_id &lt;-<span class="st"> </span>testproj<span class="op">$</span>project<span class="op">$</span>id</span>
+<span id="cb20-7"><a href="#cb20-7"></a>pred_svc &lt;-<span class="st"> </span><span class="kw">classification_service</span>(pred_endp, project_id, <span class="st">&quot;iteration1&quot;</span>)</span>
+<span id="cb20-8"><a href="#cb20-8"></a></span>
+<span id="cb20-9"><a href="#cb20-9"></a><span class="co"># predictions from prediction endpoint -- same as before</span></span>
+<span id="cb20-10"><a href="#cb20-10"></a>predsvc_tags &lt;-<span class="st"> </span><span class="kw">predict</span>(pred_svc, validation_imgs)</span>
+<span id="cb20-11"><a href="#cb20-11"></a><span class="kw">table</span>(predsvc_tags, validation_tags)</span></code></pre></div>
+<pre><code>              validation_tags
+predsvc_tags   can carton milk_bottle water_bottle
+  can            4      0           0            0
+  carton         0      5           0            0
+  milk_bottle    1      0           5            0
+  water_bottle   0      0           0            5</code></pre>
+</div>
+<div id="exporting-as-standalone" class="section level3">
+<h3>Exporting as standalone</h3>
+<p>As an alternative to deploying the model to an online predictive service resource, you can also export the model to a standalone format. This is only possible if the project was created to support exporting. The formats supported include:</p>
+<ul>
+<li>ONNX 1.2</li>
+<li>CoreML</li>
+<li>TensorFlow or TensorFlow Lite</li>
+<li>A Docker image for either the Linux, Windows or Raspberry Pi environment</li>
+<li>Vision AI Development Kit (VAIDK)</li>
+</ul>
+<p>To export the model, call <code>export_model</code> and specify the target format. By default, the model will be downloaded to your local machine, but <code>export_model</code> also (invisibly) returns a URL from where it can be downloaded independently.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1"></a><span class="kw">export_model</span>(mod, <span class="st">&quot;tensorflow&quot;</span>)</span></code></pre></div>
+<pre><code>Downloading to f243bb4c-e4f8-473e-9df0-190a407472be.TensorFlow.zip
+trying URL &#39;https://irisprodae...&#39;
+Content type &#39;application/octet-stream&#39; length 4673656 bytes (4.5 MB)
+downloaded 4.5 MB</code></pre>
+</div>
+</div>
+<div id="see-also" class="section level2">
+<h2>See also</h2>
+<ul>
+<li><a href="https://customvision.ai">CustomVision.ai</a>: An interactive site for building Custom Vision models, provided by Microsoft</li>
+<li><a href="https://southcentralus.dev.cognitive.microsoft.com/docs/services/Custom_Vision_Training_3.0/operations/5c771cdcbf6a2b18a0c3b7fa">Training API reference</a></li>
+<li><a href="https://southcentralus.dev.cognitive.microsoft.com/docs/services/Custom_Vision_Prediction_3.0/operations/5c82db60bf6a2b11a8247c15">Prediction API reference</a></li>
+</ul>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
