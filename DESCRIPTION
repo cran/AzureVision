@@ -1,6 +1,6 @@
 Package: AzureVision
 Title: Interface to Azure Computer Vision Services
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: c(
     person("Hong", "Ooi", , "hongooi@microsoft.com", role = c("aut", "cre")),
     person("Microsoft", role="cph")
@@ -16,9 +16,9 @@ Imports: AzureRMR, AzureCognitive, httr, utils
 Suggests: knitr, AzureAuth, testthat
 RoxygenNote: 6.1.1
 NeedsCompilation: no
-Packaged: 2019-11-26 01:12:06 UTC; hongo
+Packaged: 2020-04-21 02:11:30 UTC; hongo
 Author: Hong Ooi [aut, cre],
   Microsoft [cph]
 Maintainer: Hong Ooi <hongooi@microsoft.com>
 Repository: CRAN
-Date/Publication: 2019-12-06 09:30:05 UTC
+Date/Publication: 2020-04-21 04:10:06 UTC
