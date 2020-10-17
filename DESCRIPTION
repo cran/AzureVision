@@ -1,8 +1,8 @@
 Package: AzureVision
 Title: Interface to Azure Computer Vision Services
-Version: 1.0.1
+Version: 1.0.2
 Authors@R: c(
-    person("Hong", "Ooi", , "hongooi@microsoft.com", role = c("aut", "cre")),
+    person("Hong", "Ooi", , "hongooi73@gmail.com", role = c("aut", "cre")),
     person("Microsoft", role="cph")
     )
 Description: An interface to 'Azure Computer Vision' <https://docs.microsoft.com/azure/cognitive-services/Computer-vision/Home> and 'Azure Custom Vision' <https://docs.microsoft.com/azure/cognitive-services/custom-vision-service/home>, building on the low-level functionality provided by the 'AzureCognitive' package. These services allow users to leverage the cloud to carry out visual recognition tasks using advanced image processing models, without needing powerful hardware of their own. Part of the 'AzureR' family of packages.
@@ -13,12 +13,12 @@ License: MIT + file LICENSE
 VignetteBuilder: knitr
 Depends: R (>= 3.3)
 Imports: AzureRMR, AzureCognitive, httr, utils
-Suggests: knitr, AzureAuth, testthat
-RoxygenNote: 6.1.1
+Suggests: knitr, rmarkdown, AzureAuth, testthat
+RoxygenNote: 7.1.1
 NeedsCompilation: no
-Packaged: 2020-04-21 02:11:30 UTC; hongo
+Packaged: 2020-10-17 19:38:31 UTC; hongo
 Author: Hong Ooi [aut, cre],
   Microsoft [cph]
-Maintainer: Hong Ooi <hongooi@microsoft.com>
+Maintainer: Hong Ooi <hongooi73@gmail.com>
 Repository: CRAN
-Date/Publication: 2020-04-21 04:10:06 UTC
+Date/Publication: 2020-10-17 22:10:03 UTC
